@@ -1,0 +1,139 @@
+<?php
+
+namespace TheMoiza\PostgresqlRelationshipFinder;
+
+class RelationshipFinder
+{
+	protected object|bool $_pdo = false;
+
+    protected string $_upSchema = 'public';
+
+    protected string $_upTable = '';
+
+    protected string $_downSchema = 'public';
+    
+    protected string $_downTable = '';
+
+    protected array $_fks = [];
+
+    protected array $_relations = [];
+
+	protected function _connectPgsql(array $dbConnection) :object
+	{
+
+		$this->_dbConnection = $dbConnection;
+
+		try{
+
+			$dsn = $this->_dbConnection['DB_CONNECTION']??'pgsql'.':host='.$this->_dbConnection['DB_HOST'].';port='.$this->_dbConnection['DB_PORT'].';dbname='.$this->_dbConnection['DB_DATABASE'];
+			$this->_pdo = new \PDO($dsn, $this->_dbConnection['DB_USERNAME'], $this->_dbConnection['DB_PASSWORD'], []);
+			$this->_pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, 1);
+
+		}catch(\PDOException $e){
+
+			throw new RelationshipFinderException($e->getMessage());
+		}
+
+		return $this;
+	}
+
+    /**
+     * Set a config.
+     *
+     * @param array $tableUp
+     * @param array $tableDown
+     */
+	public function setConfig(array $tableDown, array $tableUp, bool|array $dbConnection = false) :object
+	{
+
+		if(is_array($tableDown)){
+			$this->_downSchema = key($tableDown);
+			$this->_downTable = $tableDown[$this->_downSchema];
+		}
+
+		if(is_array($tableUp)){
+			$this->_upSchema = key($tableUp);
+			$this->_upTable = $tableUp[$this->_upSchema];
+		}
+
+        if(is_array($dbConnection) and $dbConnection){
+            $this->_connectPgsql($dbConnection);
+        }
+
+		return $this;
+	}
+
+    public function find(){
+
+        $query = $this->_pdo->query("select
+                keylist.table_schema as down_schema,
+                keylist.table_name as down_table,
+                down_info.column_name as down_column,
+                upref.unique_constraint_schema as up_schema,
+                up_info.table_name as up_table,
+                up_info.column_name as up_column
+            from information_schema.table_constraints keylist
+            join information_schema.key_column_usage down_info
+              on keylist.constraint_schema = down_info.constraint_schema
+              and keylist.constraint_name = down_info.constraint_name
+            join information_schema.referential_constraints upref
+              on keylist.constraint_schema = upref.constraint_schema
+              and keylist.constraint_name = upref.constraint_name
+            join information_schema.key_column_usage up_info
+              on upref.unique_constraint_schema = up_info.constraint_schema
+              and upref.unique_constraint_name = up_info.constraint_name
+            where keylist.constraint_type = 'FOREIGN KEY'");
+
+        $this->_fks = $query->fetchAll(\PDO::FETCH_ASSOC);
+
+        $caminhos = $this->_encontrarCaminhos($this->_fks, $this->_downSchema, $this->_downTable, $this->_upSchema, $this->_upTable);
+        
+        $str = '';
+        if (empty($caminhos)) {
+            $str = 'Não há caminhos entre '.$this->_downSchema.'.'.$this->_downTable.' e '.$this->_upSchema.'.'.$this->_upTable;
+        } else {
+            $str .= 'Caminhos entre '.$this->_downSchema.'.'.$this->_downTable.' e '.$this->_upSchema.'.'.$this->_upTable.":\n";
+            foreach ($caminhos as $caminho) {
+                $str .= implode(' => ', $caminho)."\n";
+            }
+        }
+
+        return $str;
+    }
+
+    protected function _encontrarCaminhos($constraints, $schemaLeft, $tableLeft, $schemaRight, $tabelaRight, $currentPath = []) {
+
+        $currentPath[] = $schemaLeft.'.'.$tableLeft;
+
+        if ($schemaLeft.'.'.$tableLeft === $schemaRight.'.'.$tabelaRight) {
+            return [$currentPath];
+        }
+
+        $paths = [];
+
+        foreach ($constraints as $l) {
+
+            $downSchema = $l['down_schema'];
+            $downTable = $l['down_table'];
+            //$downColumn = $l['down_column'];
+            $upSchema = $l['up_schema'];
+            $upTable = $l['up_table'];
+            //$upColumn = $l['up_column'];
+
+            if ($downSchema.'.'.$downTable === $schemaLeft.'.'.$tableLeft) {
+
+                $possiblePath = $currentPath;
+
+                if (!in_array($upSchema.'.'.$upTable, $possiblePath)) {
+
+                    $findPath = $this->_encontrarCaminhos($constraints, $upSchema, $upTable, $schemaRight, $tabelaRight, $possiblePath);
+                    foreach ($findPath as $line) {
+                        $paths[] = $line;
+                    }
+                }
+            }
+        }
+
+        return $paths;
+    }
+}

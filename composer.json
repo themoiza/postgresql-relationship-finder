@@ -1,0 +1,31 @@
+{
+    "name": "the.moiza/postgresql-relationship-finder",
+    "description": "Explore, analyze, and visualize relationships between database tables in PostgreSql",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "TheMoiza\\PostgresqlRelationshipFinder\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Moisés de Lima",
+            "email": "the.moiza@gmail.com"
+        }
+    ],
+    "scripts": {
+        "test": [
+            "@php vendor/bin/phpunit tests"
+        ]
+    },
+    "require": {
+        "php": ">=7.2",
+        "ext-mbstring": "*",
+        "ext-fileinfo": "*",
+        "ext-zip": "*",
+        "ext-pdo": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9"
+    }
+}
