@@ -127,17 +127,17 @@ class RelationshipFinder
 
         $paths = $this->_findPaths($this->_fks, $this->_downSchema, $this->_downTable, $this->_upSchema, $this->_upTable);
 
-        $title = $this->_downSchema.'.'.$this->_downTable.' e '.$this->_upSchema.'.'.$this->_upTable;
+        $title = $this->_downSchema.'.'.$this->_downTable.' AND '.$this->_upSchema.'.'.$this->_upTable;
 
         if(count($paths) == 0){
 
             return 'Não há caminhos entre '.$title;
         }
 
-        $str = 'Caminhos entre '.$title.":\n";
+        $str = 'PATH(S) BETWEEN '.$title.":\n";
 
         foreach($paths as $path){
-            $str .= implode(' => ', $path)."\n";
+            $str .= '··'.implode(' --> ', $path)."\n";
         }
 
         return $str;
@@ -179,7 +179,7 @@ class RelationshipFinder
         $str = 'Todos os caminhos para '.$title.":\n";
 
         foreach($paths as $path){
-            $str .= implode(' => ', $path)."\n";
+            $str .= implode(' --> ', $path)."\n";
         }
 
         return $str;
