@@ -8,7 +8,7 @@ use TheMoiza\PostgresqlRelationshipFinder\RelationshipFinder;
 $RelationshipFinder = new RelationshipFinder;
 
 echo $RelationshipFinder->find(
-	$tableDown = ['public' => 'order'],
+	$tableDown = ['public' => 'budget'],
 	$tableTop = ['public' => 'users'],
 	$connection = [
 		"DB_HOST" => "127.0.0.1",

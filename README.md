@@ -6,7 +6,8 @@ Postgresql Relationship Finder is a tool for discovering and visualizing the rel
 
 - [Features](#features)
 - [Getting Started](#getting-started)
-- [Prerequisites](#prerequisites)
+- [Return Example](#return-example)
+- [Pre requisites](#pre-requisites)
 - [Installation](#installation)
 
 ## Features
@@ -28,8 +29,8 @@ use TheMoiza\PostgresqlRelationshipFinder\RelationshipFinder;
 $RelationshipFinder = new RelationshipFinder;
 
 echo $RelationshipFinder->find(
-	$tableDown = ['public' => 'users'],
-	$tableTop = ['public' => 'budget'],
+	$tableDown = ['public' => 'budget'],
+	$tableTop = ['public' => 'users'],
 	$connection = [
 		"DB_HOST" => "127.0.0.1",
 		"DB_PORT" => "5432",
@@ -41,7 +42,18 @@ echo $RelationshipFinder->find(
 );
 ```
 
-### Prerequisites
+### Return Example
+
+Execute the php file cli.php on the terminal.
+
+```bash
+$ php ./cli.php
+··public.budget --> public.order --> public.cart --> public.users
+··public.budget --> public.order --> public.users
+··public.budget --> public.users
+```
+
+### Pre requisites
 
 Before you begin, ensure you have met the following requirements:
 
@@ -50,7 +62,12 @@ Before you begin, ensure you have met the following requirements:
 
 ### Installation
 
-1. Clone this repository.
+1. By composer.
+   ```sh
+   composer require the.moiza/postgresql-relationship-finder
+   ```
+
+2. Clone this repository.
    ```sh
    git clone https://github.com/themoiza/postgresql-relationship-finder.git
    ```
